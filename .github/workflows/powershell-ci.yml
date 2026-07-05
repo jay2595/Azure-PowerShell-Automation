@@ -1,0 +1,49 @@
+name: PowerShell CI
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate-powershell:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install PowerShell
+        uses: PowerShell/PowerShell@v1
+
+      - name: Display PowerShell Version
+        shell: pwsh
+        run: |
+          $PSVersionTable
+
+      - name: List PowerShell Scripts
+        shell: pwsh
+        run: |
+          Get-ChildItem ./Scripts -Filter *.ps1
+
+      - name: Validate PowerShell Syntax
+        shell: pwsh
+        run: |
+          $scripts = Get-ChildItem ./Scripts -Filter *.ps1
+
+          foreach ($script in $scripts) {
+              Write-Host "Checking $($script.Name)..."
+
+              $null = [System.Management.Automation.PSParser]::Tokenize(
+                  (Get-Content $script.FullName -Raw),
+                  [ref]$null
+              )
+
+              Write-Host "$($script.Name) - Syntax OK"
+          }
