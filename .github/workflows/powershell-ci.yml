@@ -11,16 +11,11 @@ on:
 
 jobs:
   validate-powershell:
-
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Install PowerShell
-        uses: PowerShell/PowerShell@v1
 
       - name: Display PowerShell Version
         shell: pwsh
@@ -40,10 +35,15 @@ jobs:
           foreach ($script in $scripts) {
               Write-Host "Checking $($script.Name)..."
 
-              $null = [System.Management.Automation.PSParser]::Tokenize(
+              $errors = $null
+              [System.Management.Automation.PSParser]::Tokenize(
                   (Get-Content $script.FullName -Raw),
-                  [ref]$null
-              )
+                  [ref]$errors
+              ) | Out-Null
+
+              if ($errors.Count -gt 0) {
+                  throw "Syntax error found in $($script.Name)"
+              }
 
               Write-Host "$($script.Name) - Syntax OK"
           }
